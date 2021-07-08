@@ -1,6 +1,7 @@
 package com.example.demo.domain.image;
 
 import com.example.demo.domain.user.User;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,8 +25,9 @@ public class Image {
 
     private String postImageUrl;
 
+    @JsonIgnoreProperties({"images"}) //images는 무시한다.
     @JoinColumn(name = "userId")
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     private User user;
 
     private LocalDateTime createDate;

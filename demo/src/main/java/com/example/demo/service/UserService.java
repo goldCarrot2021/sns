@@ -1,9 +1,11 @@
 package com.example.demo.service;
 
+import com.example.demo.domain.subscribe.SubscribeRepository;
 import com.example.demo.domain.user.User;
 import com.example.demo.domain.user.UserRepository;
 import com.example.demo.handler.ex.CustomException;
 import com.example.demo.handler.ex.CustomValidationApiException;
+import com.example.demo.web.dto.user.UserProfileDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,14 +16,32 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final SubscribeRepository subscribeRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    public void userProfile(Long userId){
+    @Transactional(readOnly = true)
+    public UserProfileDto userProfile(Long pageUserId,Long principalId){
+
+        UserProfileDto dto = new UserProfileDto();
+
         // SELECT * FROM image WHERE userId = : userId;
-        User userEntity = userRepository.findById(userId).orElseThrow(
+        User userEntity = userRepository.findById(pageUserId).orElseThrow(
                 ()-> {
                     throw new CustomException("해당 프로필 페이지는 없는 페이지입니다.");
                 });
+
+        dto.setUser(userEntity);
+        // 1은 페이지 주인 -1은 페이지 주인이 아님.
+        dto.setPageOwnerState(pageUserId == principalId ? 1 : -1);
+        dto.setImageCount(userEntity.getImages().size());
+
+        int subscribeState = subscribeRepository.mSubscribeState(principalId, pageUserId);
+        int subscribeCount = subscribeRepository.mSubscribeCount(pageUserId);
+
+        dto.setSubscribeState(subscribeState);
+        dto.setSubscribeCount(subscribeCount);
+
+        return dto;
     }
 
 
